@@ -52,3 +52,6 @@ Chuyển ví MetaMask sang Distributor, thực hiện chuyển tiếp cho Pharma
 
 Bước 4: Kiểm chứng (Verify)
 Vào tab Verify & View History, nhập ID 3001 để xem toàn bộ lịch sử luân chuyển minh bạch trên Blockchain.
+
+**Link DEMO**
+https://youtu.be/0iC0OFPVVXE
