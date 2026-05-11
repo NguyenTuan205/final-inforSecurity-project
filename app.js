@@ -1060,9 +1060,13 @@ function updateAbiDisplay() {
 // ─────────────────────────────────────────────────────────────
 //  METAMASK / ETHERS.JS v5
 // ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  METAMASK / ETHERS.JS v5 (AUTO-CONNECT VERSION)
+// ─────────────────────────────────────────────────────────────
 async function autoConnectMetaMask() {
   if (typeof window.ethereum !== 'undefined') {
     try {
+      // Hỏi thầm MetaMask xem ví đã cấp quyền chưa (không làm nảy Pop-up)
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
       if (accounts.length > 0) {
         walletAddress = accounts[0];
