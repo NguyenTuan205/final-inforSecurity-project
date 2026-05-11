@@ -1,25 +1,3 @@
-/**
- * PharmaChain — app.js  (v2 — tích hợp SupplyChain.sol)
- *
- * Contract functions used:
- *   registerActor(address _wallet, string _name, uint8 _role)   [Admin only]
- *   addMedicine(uint256 _id, string _name, string _batchNumber, uint256 _expiryDate)
- *   transferItem(uint256 _id, address _newOwner)
- *   getMedicine(uint256 _id) → (id, name, batchNumber, productionDate, expiryDate, currentOwner, status)
- *   getMedicineHistory(uint256 _id) → (address[] wallets, string[] notes)
- *   verifyMedicine(uint256 _id) → (bool isValid, string message)
- *   getAllMedicineIds() → uint256[]
- *   actors(address) → (wallet, name, role, isRegistered)  [public mapping]
- *   owner() → address
- *
- * Enums (Solidity):
- *   Role   { None=0, Manufacturer=1, Distributor=2, Pharmacy=3 }
- *   Status { Produced=0, InTransit=1, Delivered=2 }
- */
-
-// ─────────────────────────────────────────────────────────────
-//  ABI — khớp hoàn toàn với SupplyChain.sol
-// ─────────────────────────────────────────────────────────────
 const CONTRACT_ABI = [
   {
     "name": "registerActor",
@@ -154,19 +132,11 @@ const CONTRACT_ABI = [
   }
 ];
 
-// ─────────────────────────────────────────────────────────────
-//  ENUM MAPPING (khớp Solidity)
-//  Role   { None=0, Manufacturer=1, Distributor=2, Pharmacy=3 }
-//  Status { Produced=0, InTransit=1, Delivered=2 }
-// ─────────────────────────────────────────────────────────────
 const STATUS_LABEL  = { 0: 'Produced', 1: 'In Transit', 2: 'Delivered' };
 const STATUS_BADGE  = { 0: 'manufactured', 1: 'distributed', 2: 'pharmacy' };
 const ROLE_NUM      = { manufacturer: 1, distributor: 2, pharmacy: 3 };
 const ROLE_LABEL    = { 0: 'None', 1: 'Manufacturer', 2: 'Distributor', 3: 'Pharmacy' };
 
-// ─────────────────────────────────────────────────────────────
-//  DEMO CREDENTIALS (hardcoded)
-// ─────────────────────────────────────────────────────────────
 const USERS = {
   manufacturer: { password: 'mfg123',   role: 'manufacturer', displayName: 'MedLab Pharma Co.',    avatar: 'M' },
   distributor:  { password: 'dist123',  role: 'distributor',  displayName: 'FastMed Distribution', avatar: 'D' },
@@ -174,9 +144,6 @@ const USERS = {
   viewer:       { password: 'view123',  role: 'viewer',       displayName: 'Public Verifier',       avatar: 'V' },
 };
 
-// ─────────────────────────────────────────────────────────────
-//  NAV CONFIG PER ROLE
-// ─────────────────────────────────────────────────────────────
 const NAV_CONFIG = {
   manufacturer: [
     { id: 'dashboard',  label: 'Dashboard',        icon: '⊞' },
@@ -204,13 +171,10 @@ const NAV_CONFIG = {
     { id: 'dashboard',  label: 'Dashboard',         icon: '⊞' },
   ],
 };
-// ─────────────────────────────────────────────────────────────
-//  HARDCODED CONFIG & STATE
-// ─────────────────────────────────────────────────────────────
-// 👇 DÁN ĐỊA CHỈ CONTRACT TỪ REMIX CỦA BẠN VÀO GIỮA 2 DẤU NGOẶC KÉP BÊN DƯỚI 👇
+
 const MY_CONTRACT_ADDRESS = "0x_DAN_DIA_CHI_CUA_BAN_VAO_DAY"; 
 
-let mockDrugs = {}; // Ép xóa sạch dữ liệu ảo, bắt web phải lấy từ Blockchain
+let mockDrugs = {}; 
 
 let currentUser   = null;
 let walletAddress = null;
@@ -218,11 +182,7 @@ let provider      = null;
 let signer        = null;
 let contract      = null;
 let contractAddr  = MY_CONTRACT_ADDRESS;
-let useMock       = false;   // TẮT VĨNH VIỄN chế độ Mock Data
-
-// ─────────────────────────────────────────────────────────────
-//  LOGIN
-// ─────────────────────────────────────────────────────────────
+let useMock       = false;
 function fillCred(user, pass) {
   document.getElementById('loginUsername').value = user;
   document.getElementById('loginPassword').value = pass;
@@ -254,9 +214,6 @@ function handleLogout() {
 document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key==='Enter') handleLogin(); });
 document.getElementById('loginUsername').addEventListener('keydown', e => { if (e.key==='Enter') handleLogin(); });
 
-// ─────────────────────────────────────────────────────────────
-//  INIT APP
-// ─────────────────────────────────────────────────────────────
 function initApp() {
   document.getElementById('loginScreen').classList.remove('active');
   document.getElementById('appScreen').classList.add('active');
@@ -268,9 +225,6 @@ function initApp() {
   navigateTo(currentUser.role === 'viewer' ? 'verify' : 'dashboard');
 }
 
-// ─────────────────────────────────────────────────────────────
-//  SIDEBAR
-// ─────────────────────────────────────────────────────────────
 function buildSidebar() {
   const badgeCls = { manufacturer:'manufactured', distributor:'distributed', pharmacy:'pharmacy', viewer:'verified' };
   document.getElementById('sidebarUser').innerHTML = `
@@ -321,9 +275,6 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
 }
 
-// ─────────────────────────────────────────────────────────────
-//  DASHBOARD
-// ─────────────────────────────────────────────────────────────
 function buildDashboard() {
   const drugs = Object.values(mockDrugs);
   const role  = currentUser.role;
@@ -372,9 +323,6 @@ function buildDashboard() {
   document.getElementById('recentProducts').innerHTML  = drugs.slice(-4).reverse().map(renderCard).join('');
 }
 
-// ─────────────────────────────────────────────────────────────
-//  PRODUCT CARD
-// ─────────────────────────────────────────────────────────────
 function renderCard(d) {
   const s = numStatus(d.status);
   return `
@@ -395,10 +343,6 @@ function renderCard(d) {
       </div>
     </div>`;
 }
-
-// ─────────────────────────────────────────────────────────────
-//  MY PRODUCTS  (Distributor → status InTransit=1, Pharmacy → Delivered=2)
-// ─────────────────────────────────────────────────────────────
 function buildMyProducts() {
   const filterStatus = currentUser.role === 'distributor' ? 1 : 2;
   const list = Object.values(mockDrugs).filter(d => numStatus(d.status) === filterStatus);
@@ -411,14 +355,11 @@ function buildMyProducts() {
     : `<div class="empty-state"><div class="empty-icon">📦</div><p>Chưa có thuốc nào trong kho của bạn.</p></div>`;
 }
 
-// ─────────────────────────────────────────────────────────────
-//  ADD MEDICINE  →  contract.addMedicine(uint256, string, string, uint256)
-// ─────────────────────────────────────────────────────────────
 async function addProduct() {
   const idRaw  = document.getElementById('addProductId').value.trim();
   const name   = document.getElementById('addDrugName').value.trim();
   const batch  = document.getElementById('addBatchNo').value.trim();
-  const expiry = document.getElementById('addExpiry').value;           // "YYYY-MM-DD"
+  const expiry = document.getElementById('addExpiry').value;        
 
   if (!idRaw || !name || !batch || !expiry) {
     showToast('Vui lòng điền đầy đủ các trường bắt buộc (*).', 'warning'); return;
@@ -443,19 +384,14 @@ async function addProduct() {
     let txHash;
 
     if (!useMock && contract) {
-      // ── LIVE: gọi contract.addMedicine ──
-      // Lưu ý: contract yêu cầu msg.sender đã registerActor với role=Manufacturer
       const tx = await contract.addMedicine(id, name, batch, expiryTs);
       showTxMessage('Đang chờ xác nhận block...');
       const receipt = await tx.wait();
       txHash = receipt.transactionHash;
     } else {
-      // ── MOCK ──
       await sleep(1500);
       txHash = '0x' + randomHex(64);
     }
-
-    // Cập nhật cache local
     const nowTs = Math.floor(Date.now() / 1000);
     mockDrugs[id] = {
       id,
@@ -464,7 +400,7 @@ async function addProduct() {
       productionDate: nowTs,
       expiryDate:     expiryTs,
       currentOwner:   walletAddress || '0xMANF_MOCK',
-      status:         0,  // Produced
+      status:         0,  
       history:        [walletAddress || '0xMANF_MOCK'],
       statusHistory:  ['Produced by Manufacturer'],
     };
@@ -484,11 +420,6 @@ function clearAddForm() {
   ['addProductId','addDrugName','addBatchNo','addExpiry','addQuantity','addManufacturerName','addNotes']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 }
-
-// ─────────────────────────────────────────────────────────────
-//  TRANSFER ITEM  →  contract.transferItem(uint256, address)
-//  Contract validates: senderRole → receiverRole, ownership, expiry
-// ─────────────────────────────────────────────────────────────
 function populateTransferTargets() {
   const targets = {
     manufacturer: [{ value: 'distributor', label: 'FastMed Distribution (Distributor)' }],
@@ -511,8 +442,6 @@ async function previewTransfer() {
   const id = parseInt(document.getElementById('transferProductId').value.trim());
   const el = document.getElementById('transferPreview');
   if (!id) { showToast('Nhập Medicine ID trước.', 'warning'); return; }
-
-  // Nếu live mode: tải trực tiếp từ chain
   let d = mockDrugs[id];
   if (!useMock && contract) {
     try {
@@ -526,7 +455,7 @@ async function previewTransfer() {
         currentOwner: m.currentOwner,
         status:       m.status,
       };
-      mockDrugs[id] = { ...d, history: [], statusHistory: [] }; // cache
+      mockDrugs[id] = { ...d, history: [], statusHistory: [] };
     } catch (_) { d = null; }
   }
 
@@ -534,10 +463,7 @@ async function previewTransfer() {
     el.innerHTML = `<p style="color:var(--red-500)">⚠ Không tìm thấy Medicine ID: ${id} trên chain.</p>`;
     el.classList.remove('hidden'); return;
   }
-
   const s = numStatus(d.status);
-
-  // Kiểm tra ownership — live: so sánh currentOwner vs walletAddress
   let ownerWarning = '';
   if (!useMock && walletAddress) {
     if (d.currentOwner.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -547,7 +473,6 @@ async function previewTransfer() {
     }
   }
 
-  // Lookup tên actor của currentOwner
   let ownerName = await lookupActorName(d.currentOwner);
 
   el.innerHTML = `
@@ -568,12 +493,6 @@ async function previewTransfer() {
     ${ownerWarning}`;
   el.classList.remove('hidden');
 }
-
-/**
- * Tra cứu tên Actor theo địa chỉ ví.
- * Live: gọi contract.actors(addr)
- * Mock: tra bảng USERS theo walletAddress hoặc fallback theo prefix
- */
 async function lookupActorName(addr) {
   if (!addr) return '';
   if (!useMock && contract) {
@@ -583,7 +502,6 @@ async function lookupActorName(addr) {
     } catch (_) {}
     return '';
   }
-  // Mock: nhận dạng qua prefix của mock addresses
   const lower = addr.toLowerCase();
   if (lower.includes('manf')) return 'MedLab Pharma Co. (Manufacturer)';
   if (lower.includes('dist')) return 'FastMed Distribution (Distributor)';
@@ -601,14 +519,11 @@ async function transferProduct() {
   const recipientInput = document.getElementById('transferRecipientAddr');
   let newOwnerAddr = recipientInput ? recipientInput.value.trim() : '';
 
-  // ── Validate live mode ──
   if (!useMock && contract) {
     if (!walletAddress) { showToast('Kết nối MetaMask trước.', 'warning'); return; }
     if (!ethers.utils.isAddress(newOwnerAddr)) {
       showToast('Địa chỉ ví người nhận không hợp lệ. Bắt buộc nhập khi dùng Live mode.', 'error'); return;
     }
-
-    // Kiểm tra recipient đã registerActor đúng role chưa
     try {
       const recipientActor = await contract.actors(newOwnerAddr);
       const expectedRole   = ROLE_NUM[toRole];
@@ -622,8 +537,6 @@ async function transferProduct() {
       showToast('Không thể kiểm tra actor trên chain: ' + parseRevert(e), 'error'); return;
     }
   }
-
-  // ── Mock: kiểm tra medicine tồn tại ──
   const d = mockDrugs[id];
   if (!d && useMock) { showToast('Không tìm thấy Medicine ID trong mock data.', 'error'); return; }
 
@@ -634,13 +547,10 @@ async function transferProduct() {
     let recipientName = '';
 
     if (!useMock && contract) {
-      // ── LIVE: gọi contract.transferItem(uint256 _id, address _newOwner) ──
       const tx = await contract.transferItem(id, newOwnerAddr);
       showTxMessage('Giao dịch đã gửi — đang chờ xác nhận block...');
       const receipt = await tx.wait();
       txHash = receipt.transactionHash;
-
-      // Sau khi confirm, reload medicine từ chain để sync cache
       try {
         const m    = await contract.getMedicine(id);
         const hist = await contract.getMedicineHistory(id);
@@ -656,21 +566,16 @@ async function transferProduct() {
           statusHistory:  hist.notes,
         };
       } catch (_) {}
-
-      // Lấy tên recipient từ contract.actors
       try {
         const ra = await contract.actors(newOwnerAddr);
         recipientName = ra.isRegistered ? ra.name : shortAddr(newOwnerAddr);
       } catch (_) { recipientName = shortAddr(newOwnerAddr); }
 
     } else {
-      // ── MOCK ──
       await sleep(1500);
       txHash       = '0x' + randomHex(64);
       newOwnerAddr = '0x' + toRole.toUpperCase().slice(0,4).padEnd(38,'0') + 'FF';
       recipientName = { distributor:'FastMed Distribution', pharmacy:'City Care Pharmacy' }[toRole] || toRole;
-
-      // Update mock cache
       const newStatus = toRole === 'pharmacy' ? 2 : 1;
       const noteMap   = { distributor: 'In Transit to Distributor', pharmacy: 'Delivered to Pharmacy' };
       if (d) {
@@ -697,11 +602,6 @@ async function transferProduct() {
     showToast('Lỗi transferItem: ' + parseRevert(err), 'error');
   }
 }
-
-// ─────────────────────────────────────────────────────────────
-//  REGISTER ACTOR  →  contract.registerActor(address, string, uint8)
-//  Chỉ contract.owner() mới gọi được hàm này
-// ─────────────────────────────────────────────────────────────
 async function registerActorOnChain() {
   const addr = document.getElementById('regWallet').value.trim();
   const name = document.getElementById('regName').value.trim();
@@ -717,7 +617,6 @@ async function registerActorOnChain() {
       if (!ethers.utils.isAddress(addr)) {
         closeTxModal(); showToast('Địa chỉ ví không hợp lệ.', 'error'); return;
       }
-      // Kiểm tra caller có phải owner không
       const contractOwner = await contract.owner();
       if (walletAddress.toLowerCase() !== contractOwner.toLowerCase()) {
         closeTxModal();
@@ -741,11 +640,6 @@ async function registerActorOnChain() {
     showToast('Lỗi registerActor: ' + parseRevert(err), 'error');
   }
 }
-
-// ─────────────────────────────────────────────────────────────
-//  VERIFY / VIEW HISTORY
-//  getMedicine + getMedicineHistory + verifyMedicine
-// ─────────────────────────────────────────────────────────────
 function updateQuickIds() {
   const container = document.getElementById('quickIds');
   container.querySelectorAll('.quick-id-btn').forEach(e => e.remove());
@@ -770,7 +664,6 @@ async function verifyProduct() {
 
   try {
     if (!useMock && contract) {
-      // ── LIVE: đọc 3 hàm từ blockchain ──
       showToast('Đang truy vấn blockchain...', 'info');
       const m = await contract.getMedicine(id);
       med = {
@@ -783,17 +676,15 @@ async function verifyProduct() {
         status:         m.status,
       };
       const hist  = await contract.getMedicineHistory(id);
-      wallets     = hist.wallets;          // address[] — danh sách ví theo thứ tự
-      notes       = hist.notes;            // string[]  — mô tả tương ứng
+      wallets     = hist.wallets;       
+      notes       = hist.notes;            
       const v     = await contract.verifyMedicine(id);
       isValid     = v.isValid;
       validMsg    = v.message;
 
-      // Cache lại
       mockDrugs[id] = { ...med, history: wallets, statusHistory: notes };
 
     } else {
-      // ── MOCK ──
       const d = mockDrugs[id];
       if (!d) throw new Error('not_found');
       med      = d;
@@ -816,13 +707,7 @@ async function verifyProduct() {
   empEl.classList.add('hidden');
   resEl.classList.remove('hidden');
   const s = numStatus(med.status);
-
-  // ── Lookup tên actor cho từng wallet trong history ──
-  // Live: gọi contract.actors(addr) cho mỗi địa chỉ
-  // Mock: nhận dạng qua prefix
   const actorInfoList = await Promise.all(wallets.map(w => lookupActorFull(w)));
-
-  // ─── 1. Product Info Card ───
   const ownerInfo = actorInfoList[actorInfoList.length - 1] || {};
   document.getElementById('verifyProductCard').innerHTML = `
     <div class="vpc-left">
@@ -856,7 +741,6 @@ async function verifyProduct() {
         <span class="vv">${wallets.length} ví</span></div>
     </div>`;
 
-  // ─── 2. Timeline (Produced=0 → InTransit=1 → Delivered=2) ───
   const stages = [
     { label: 'Produced',     sub: 'Manufacturer', icon: '🏭' },
     { label: 'In Transit',   sub: 'Distributor',  icon: '🚚' },
@@ -876,9 +760,6 @@ async function verifyProduct() {
           ${actor.address ? `<div class="step-addr" onclick="copyAddr('${actor.address}')" title="${actor.address}">${shortAddr(actor.address)}</div>` : ''}
         </div>`;
     }).join('') + `</div>`;
-
-  // ─── 3. Wallet Chain — danh sách địa chỉ ví đầy đủ ───
-  // Đây là phần hiển thị rõ ràng tất cả ví đã cầm lô thuốc
   const walletChainHTML = wallets.map((w, i) => {
     const info = actorInfoList[i] || {};
     const roleBadge = info.roleNum !== undefined
@@ -904,7 +785,6 @@ async function verifyProduct() {
       </div>`;
   }).join('');
 
-  // ─── 4. History Table ───
   document.getElementById('verifyTableBody').innerHTML = wallets.map((w, i) => {
     const info = actorInfoList[i] || {};
     const roleBadge = info.roleNum !== undefined
@@ -927,7 +807,6 @@ async function verifyProduct() {
       </tr>`;
   }).join('');
 
-  // Inject wallet chain section
   let walletChainSection = document.getElementById('walletChainSection');
   if (!walletChainSection) {
     walletChainSection = document.createElement('div');
@@ -942,11 +821,6 @@ async function verifyProduct() {
     <div class="wallet-chain-list">${walletChainHTML}</div>`;
 }
 
-/**
- * Lookup đầy đủ thông tin actor: name, roleNum, address
- * Live: contract.actors(addr)
- * Mock: nhận dạng theo prefix
- */
 async function lookupActorFull(addr) {
   if (!addr) return {};
   if (!useMock && contract) {
@@ -956,7 +830,6 @@ async function lookupActorFull(addr) {
     } catch (_) {}
     return { address: addr };
   }
-  // Mock: nhận dạng
   const lower = addr.toLowerCase();
   if (lower.includes('manf') || lower.includes('0xmanf'))
     return { address: addr, name: 'MedLab Pharma Co.',    roleNum: 1 };
@@ -969,12 +842,10 @@ async function lookupActorFull(addr) {
   return { address: addr };
 }
 
-/** Copy địa chỉ ví vào clipboard và hiển thị toast */
 function copyAddr(addr) {
   navigator.clipboard.writeText(addr).then(() => {
     showToast('Đã copy: ' + addr, 'success');
   }).catch(() => {
-    // fallback cho môi trường không có clipboard API
     const el = document.createElement('textarea');
     el.value = addr; document.body.appendChild(el);
     el.select(); document.execCommand('copy');
@@ -983,9 +854,6 @@ function copyAddr(addr) {
   });
 }
 
-// ─────────────────────────────────────────────────────────────
-//  CONTRACT SETTINGS
-// ─────────────────────────────────────────────────────────────
 function saveContractSettings() {
   const addr   = document.getElementById('contractAddress').value.trim();
   const abiRaw = document.getElementById('contractAbi').value.trim();
@@ -1019,7 +887,6 @@ function saveContractSettings() {
   }
 }
 
-// Tải toàn bộ medicine từ chain về cache
 async function loadChainData() {
   if (!contract) return;
   try {
@@ -1043,7 +910,7 @@ async function loadChainData() {
           statusHistory:  hist.notes,
         };
         count++;
-      } catch (_) { /* bỏ qua ID lỗi */ }
+      } catch (_) {}
     }
     buildDashboard();
     updateQuickIds();
@@ -1057,32 +924,21 @@ function updateAbiDisplay() {
   document.getElementById('abiDisplay').textContent = JSON.stringify(CONTRACT_ABI, null, 2);
 }
 
-// ─────────────────────────────────────────────────────────────
-//  METAMASK / ETHERS.JS v5
-// ─────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────
-//  METAMASK / ETHERS.JS v5 (AUTO-CONNECT VERSION)
-// ─────────────────────────────────────────────────────────────
 async function autoConnectMetaMask() {
   if (typeof window.ethereum !== 'undefined') {
     try {
-      // Hỏi thầm MetaMask xem ví đã cấp quyền chưa (không làm nảy Pop-up)
       const accounts = await window.ethereum.request({ method: 'eth_accounts' });
       if (accounts.length > 0) {
         walletAddress = accounts[0];
         provider = new ethers.providers.Web3Provider(window.ethereum);
         signer = provider.getSigner();
         const network = await provider.getNetwork();
-        
-        // Tự động gán Contract
         if (contractAddr) {
           contract = new ethers.Contract(contractAddr, CONTRACT_ABI, signer);
           useMock = false;
         }
         
         updateWalletUI(walletAddress, network.name, true);
-        
-        // Đăng ký lắng nghe sự kiện đổi ví
         window.ethereum.on('accountsChanged', accs => {
           if (!accs.length) disconnectWallet();
           else { walletAddress = accs[0]; updateWalletUI(walletAddress, null, true); }
@@ -1106,12 +962,10 @@ async function connectWallet() {
     
     const network = await provider.getNetwork();
     updateWalletUI(walletAddress, network.name, true);
-
-    // Kết nối ngay với Contract đã Hardcode
     if (contractAddr) {
       contract = new ethers.Contract(contractAddr, CONTRACT_ABI, signer);
       useMock  = false;
-      loadChainData(); // Tải luôn dữ liệu từ Blockchain về
+      loadChainData();
     }
 
     window.ethereum.on('accountsChanged', accs => {
@@ -1151,12 +1005,8 @@ function updateWalletUI(address, network, connected) {
   }
 }
 
-// GỌI HÀM NÀY NGAY KHI WEB VỪA MỞ LÊN
 autoConnectMetaMask();
 
-// ─────────────────────────────────────────────────────────────
-//  TX MODAL
-// ─────────────────────────────────────────────────────────────
 function showTxModal(msg) {
   document.getElementById('txMessage').textContent = msg;
   document.getElementById('txSpinner').classList.remove('hidden');
@@ -1171,10 +1021,6 @@ function showTxSuccess(msg, tx) {
   document.getElementById('txSuccess').classList.remove('hidden');
 }
 function closeTxModal() { document.getElementById('txModal').classList.add('hidden'); }
-
-// ─────────────────────────────────────────────────────────────
-//  TOAST
-// ─────────────────────────────────────────────────────────────
 function showToast(message, type = 'info') {
   const icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
   const t = document.createElement('div');
@@ -1183,10 +1029,6 @@ function showToast(message, type = 'info') {
   document.getElementById('toastContainer').appendChild(t);
   setTimeout(() => t.remove(), 4200);
 }
-
-// ─────────────────────────────────────────────────────────────
-//  UTILITIES
-// ─────────────────────────────────────────────────────────────
 function numStatus(s)  { return typeof s === 'object' ? s.toNumber() : Number(s); }
 
 function statusBadgeHTML(s) {
@@ -1213,13 +1055,11 @@ function tsToDate(ts) {
   return new Date(n * 1000).toLocaleDateString('vi-VN');
 }
 
-// Trích xuất revert message từ Ethers error
 function parseRevert(err) {
   if (err?.data?.message)   return err.data.message;
   if (err?.reason)          return err.reason;
   if (err?.error?.message)  return err.error.message;
   if (err?.message) {
-    // Cắt chuỗi JSON lồng nếu có
     const m = err.message.match(/"message":"([^"]+)"/);
     if (m) return m[1];
     return err.message.slice(0, 150);
@@ -1229,8 +1069,4 @@ function parseRevert(err) {
 
 function sleep(ms)      { return new Promise(r => setTimeout(r, ms)); }
 function randomHex(len) { return Array.from({length:len},()=>Math.floor(Math.random()*16).toString(16)).join(''); }
-
-// ─────────────────────────────────────────────────────────────
-//  BOOTSTRAP
-// ─────────────────────────────────────────────────────────────
 updateQuickIds();

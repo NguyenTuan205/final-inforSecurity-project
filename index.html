@@ -5,13 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>PharmaChain — Pharmaceutical Supply Chain</title>
   <link rel="stylesheet" href="style.css"/>
-  <!-- Ethers.js v5 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
 <body>
 
-<!-- ════════════════════════════════════
-     LOGIN SCREEN
-════════════════════════════════════ -->
 <div id="loginScreen" class="screen active">
   <div class="login-bg">
     <div class="login-grid"></div>
@@ -65,12 +61,7 @@
   </div>
 </div>
 
-<!-- ════════════════════════════════════
-     MAIN APP
-════════════════════════════════════ -->
 <div id="appScreen" class="screen">
-
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo-icon small">⬡</div>
@@ -97,16 +88,12 @@
     <button class="btn-logout" onclick="handleLogout()">⎋ Đăng xuất</button>
   </aside>
 
-  <!-- MAIN CONTENT -->
   <main class="main-content">
-
-    <!-- TOPBAR -->
     <header class="topbar">
       <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
     </header>
 
-    <!-- ── PAGE: DASHBOARD ── -->
     <section class="page active" id="pageDashboard">
       <div class="page-header">
         <h2 id="dashWelcome">Welcome</h2>
@@ -117,7 +104,6 @@
       <div id="recentProducts" class="product-cards"></div>
     </section>
 
-    <!-- ── PAGE: ADD MEDICINE (Manufacturer) ── -->
     <section class="page" id="pageAddProduct">
       <div class="page-header">
         <h2>Add New Medicine</h2>
@@ -150,7 +136,6 @@
             <input type="date" id="addExpiry"/>
           </div>
         </div>
-        <!-- 2 trường dưới chỉ để UI đẹp, không gửi lên contract (contract không nhận) -->
         <div class="form-row">
           <div class="form-group">
             <label>Nhà sản xuất <span class="note">(chỉ hiển thị UI)</span></label>
@@ -172,7 +157,6 @@
       </div>
     </section>
 
-    <!-- ── PAGE: TRANSFER ITEM ── -->
     <section class="page" id="pageTransfer">
       <div class="page-header">
         <h2>Transfer Medicine</h2>
@@ -199,7 +183,6 @@
           </div>
         </div>
 
-        <!-- Địa chỉ ví người nhận — bắt buộc khi Live mode -->
         <div class="form-group">
           <label>
             Địa chỉ ví người nhận (address _newOwner)
@@ -224,7 +207,6 @@
       </div>
     </section>
 
-    <!-- ── PAGE: MY PRODUCTS (Distributor / Pharmacy) ── -->
     <section class="page" id="pageMyProducts">
       <div class="page-header">
         <h2 id="myProductsTitle">My Medicines</h2>
@@ -233,7 +215,6 @@
       <div id="myProductsList" class="product-cards"></div>
     </section>
 
-    <!-- ── PAGE: VERIFY / HISTORY ── -->
     <section class="page" id="pageVerify">
       <div class="page-header">
         <h2>Verify &amp; View History</h2>
@@ -280,7 +261,6 @@
       </div>
     </section>
 
-    <!-- ── PAGE: REGISTER ACTOR (Manufacturer / Admin) ── -->
     <section class="page" id="pageRegister">
       <div class="page-header">
         <h2>Register Actor</h2>
@@ -318,7 +298,6 @@
         </div>
       </div>
 
-      <!-- Hướng dẫn luồng deploy -->
       <div class="form-card" style="margin-top:20px">
         <div class="section-title">Hướng dẫn Deploy &amp; Setup</div>
         <ol class="guide-list">
@@ -331,7 +310,6 @@
       </div>
     </section>
 
-    <!-- ── PAGE: CONTRACT SETTINGS ── -->
     <section class="page" id="pageSettings">
       <div class="page-header">
         <h2>Contract Settings</h2>
@@ -367,7 +345,6 @@
   </main>
 </div>
 
-<!-- TX MODAL -->
 <div class="modal-overlay hidden" id="txModal">
   <div class="modal">
     <div class="modal-spinner" id="txSpinner">
@@ -383,10 +360,7 @@
     </div>
   </div>
 </div>
-
-<!-- TOAST -->
 <div id="toastContainer"></div>
-
 <script src="app.js"></script>
 </body>
 </html>
