@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PharmaChain — Pharmaceutical Supply Chain</title>
+  <link rel="stylesheet" href="style.css"/>
+  <!-- Ethers.js v5 -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     LOGIN SCREEN
+════════════════════════════════════ -->
+<div id="loginScreen" class="screen active">
+  <div class="login-bg">
+    <div class="login-grid"></div>
+    <div class="login-blobs">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+    </div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">⬡</div>
+      <h1>PharmaChain</h1>
+      <p>Pharmaceutical Supply Chain on Blockchain</p>
+    </div>
+
+    <div class="login-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUsername" placeholder="Nhập username" autocomplete="off"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Nhập password"/>
+      </div>
+      <div id="loginError" class="alert alert-error hidden">Sai username hoặc password.</div>
+      <button class="btn btn-primary btn-full" onclick="handleLogin()">Đăng nhập</button>
+    </div>
+
+    <div class="login-demo-creds">
+      <p class="demo-title">Demo Credentials — click để điền</p>
+      <div class="cred-grid">
+        <div class="cred-item" onclick="fillCred('manufacturer','mfg123')">
+          <span class="cred-role role-manufacturer">Manufacturer</span>
+          <span class="cred-info">manufacturer / mfg123</span>
+        </div>
+        <div class="cred-item" onclick="fillCred('distributor','dist123')">
+          <span class="cred-role role-distributor">Distributor</span>
+          <span class="cred-info">distributor / dist123</span>
+        </div>
+        <div class="cred-item" onclick="fillCred('pharmacy','pharm123')">
+          <span class="cred-role role-pharmacy">Pharmacy</span>
+          <span class="cred-info">pharmacy / pharm123</span>
+        </div>
+        <div class="cred-item" onclick="fillCred('viewer','view123')">
+          <span class="cred-role role-viewer">Viewer</span>
+          <span class="cred-info">viewer / view123</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     MAIN APP
+════════════════════════════════════ -->
+<div id="appScreen" class="screen">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-icon small">⬡</div>
+      <span class="logo-text">PharmaChain</span>
+    </div>
+
+    <div class="sidebar-user" id="sidebarUser"></div>
+    <nav class="sidebar-nav"  id="sidebarNav"></nav>
+
+    <div class="sidebar-wallet">
+      <div class="wallet-status" id="walletStatus">
+        <div class="wallet-dot disconnected"></div>
+        <span>Wallet Disconnected</span>
+      </div>
+      <button class="btn btn-wallet" id="connectWalletBtn" onclick="connectWallet()">
+        Connect MetaMask
+      </button>
+      <div class="wallet-info hidden" id="walletInfo">
+        <div class="wallet-address" id="walletAddress"></div>
+        <div class="wallet-network" id="walletNetwork"></div>
+      </div>
+    </div>
+
+    <button class="btn-logout" onclick="handleLogout()">⎋ Đăng xuất</button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+    </header>
+
+    <!-- ── PAGE: DASHBOARD ── -->
+    <section class="page active" id="pageDashboard">
+      <div class="page-header">
+        <h2 id="dashWelcome">Welcome</h2>
+        <p id="dashSubtitle">Tổng quan chuỗi cung ứng.</p>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="section-title">Recent Medicines</div>
+      <div id="recentProducts" class="product-cards"></div>
+    </section>
+
+    <!-- ── PAGE: ADD MEDICINE (Manufacturer) ── -->
+    <section class="page" id="pageAddProduct">
+      <div class="page-header">
+        <h2>Add New Medicine</h2>
+        <p>Gọi <code>addMedicine(uint256 _id, string _name, string _batchNumber, uint256 _expiryDate)</code></p>
+      </div>
+
+      <div class="callout">
+        <strong>⚠ Yêu cầu live mode:</strong> Ví MetaMask của bạn phải đã được
+        <code>registerActor</code> với Role = <strong>Manufacturer (1)</strong> bởi Admin.
+      </div>
+
+      <div class="form-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Medicine ID (uint256) <span class="required">*</span></label>
+            <input type="number" id="addProductId" placeholder="VD: 1001" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Tên thuốc <span class="required">*</span></label>
+            <input type="text" id="addDrugName" placeholder="VD: Amoxicillin 500mg"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Batch Number <span class="required">*</span></label>
+            <input type="text" id="addBatchNo" placeholder="VD: BATCH-A-2024"/>
+          </div>
+          <div class="form-group">
+            <label>Ngày hết hạn <span class="required">*</span></label>
+            <input type="date" id="addExpiry"/>
+          </div>
+        </div>
+        <!-- 2 trường dưới chỉ để UI đẹp, không gửi lên contract (contract không nhận) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nhà sản xuất <span class="note">(chỉ hiển thị UI)</span></label>
+            <input type="text" id="addManufacturerName" placeholder="VD: MedLab Pharma Co."/>
+          </div>
+          <div class="form-group">
+            <label>Số lượng (units) <span class="note">(chỉ hiển thị UI)</span></label>
+            <input type="number" id="addQuantity" placeholder="VD: 1000" min="1"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ghi chú <span class="note">(chỉ hiển thị UI)</span></label>
+          <textarea id="addNotes" rows="2" placeholder="Điều kiện bảo quản, liều dùng..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="clearAddForm()">Xóa form</button>
+          <button class="btn btn-primary" onclick="addProduct()">⊕ Gọi addMedicine()</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PAGE: TRANSFER ITEM ── -->
+    <section class="page" id="pageTransfer">
+      <div class="page-header">
+        <h2>Transfer Medicine</h2>
+        <p id="transferSubtitle">Gọi <code>transferItem(uint256 _id, address _newOwner)</code></p>
+      </div>
+
+      <div class="callout">
+        <strong>⚠ Contract rule:</strong>
+        Manufacturer → chỉ chuyển cho Distributor &nbsp;|&nbsp;
+        Distributor → chỉ chuyển cho Pharmacy &nbsp;|&nbsp;
+        Pharmacy → không chuyển được.
+        Người nhận phải đã được <code>registerActor</code>.
+      </div>
+
+      <div class="form-card">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Medicine ID (uint256) <span class="required">*</span></label>
+            <input type="number" id="transferProductId" placeholder="VD: 1001" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Loại người nhận <span class="required">*</span></label>
+            <select id="transferTo"></select>
+          </div>
+        </div>
+
+        <!-- Địa chỉ ví người nhận — bắt buộc khi Live mode -->
+        <div class="form-group">
+          <label>
+            Địa chỉ ví người nhận (address _newOwner)
+            <span class="required">*</span>
+            <span class="note"> — bắt buộc khi dùng Live mode</span>
+          </label>
+          <input type="text" id="transferRecipientAddr"
+                 placeholder="0x... (địa chỉ ví đã registerActor đúng role)"/>
+        </div>
+
+        <div class="form-group">
+          <label>Ghi chú chuyển giao <span class="note">(chỉ UI)</span></label>
+          <input type="text" id="transferNotes" placeholder="VD: Cold chain maintained"/>
+        </div>
+
+        <div id="transferPreview" class="transfer-preview hidden"></div>
+
+        <div class="form-actions">
+          <button class="btn btn-secondary" onclick="previewTransfer()">🔍 Preview</button>
+          <button class="btn btn-primary"   onclick="transferProduct()">↗ Gọi transferItem()</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PAGE: MY PRODUCTS (Distributor / Pharmacy) ── -->
+    <section class="page" id="pageMyProducts">
+      <div class="page-header">
+        <h2 id="myProductsTitle">My Medicines</h2>
+        <p>Thuốc đang trong quyền sở hữu của bạn.</p>
+      </div>
+      <div id="myProductsList" class="product-cards"></div>
+    </section>
+
+    <!-- ── PAGE: VERIFY / HISTORY ── -->
+    <section class="page" id="pageVerify">
+      <div class="page-header">
+        <h2>Verify &amp; View History</h2>
+        <p>Gọi <code>getMedicine()</code> · <code>getMedicineHistory()</code> · <code>verifyMedicine()</code></p>
+      </div>
+
+      <div class="search-bar-card">
+        <div class="search-bar">
+          <span class="search-icon">⬡</span>
+          <input type="number" id="verifyProductId" min="1"
+                 placeholder="Nhập Medicine ID (uint256)..."
+                 onkeydown="if(event.key==='Enter') verifyProduct()"/>
+          <button class="btn btn-primary" onclick="verifyProduct()">Trace</button>
+        </div>
+        <div class="quick-ids" id="quickIds">
+          <span class="quick-label">Quick lookup:</span>
+        </div>
+      </div>
+
+      <div id="verifyResult" class="hidden">
+        <div class="verify-product-card" id="verifyProductCard"></div>
+        <div class="section-title">Supply Chain Journey</div>
+        <div class="timeline-container" id="verifyTimeline"></div>
+        <div class="section-title">Full Transaction History</div>
+        <div class="table-wrapper">
+          <table class="history-table" id="verifyTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Event / Note</th>
+                <th>Actor (Tên &amp; Role)</th>
+                <th>Địa chỉ ví đầy đủ — click để copy</th>
+                <th>From → To</th>
+              </tr>
+            </thead>
+            <tbody id="verifyTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="verifyEmpty" class="empty-state hidden">
+        <div class="empty-icon">🔍</div>
+        <p>Không tìm thấy Medicine ID này.</p>
+      </div>
+    </section>
+
+    <!-- ── PAGE: REGISTER ACTOR (Manufacturer / Admin) ── -->
+    <section class="page" id="pageRegister">
+      <div class="page-header">
+        <h2>Register Actor</h2>
+        <p>Gọi <code>registerActor(address _wallet, string _name, uint8 _role)</code> — chỉ Admin (contract owner).</p>
+      </div>
+
+      <div class="callout callout-info">
+        <strong>ℹ Lưu ý:</strong> Hàm này chỉ thực thi thành công khi ví MetaMask đang kết nối
+        là <strong>owner</strong> của contract (tức là địa chỉ đã deploy).
+        Trong Mock mode, thao tác được giả lập offline.
+      </div>
+
+      <div class="form-card" style="max-width:600px">
+        <div class="form-group">
+          <label>Địa chỉ ví (address _wallet) <span class="required">*</span></label>
+          <input type="text" id="regWallet" placeholder="0x..."/>
+        </div>
+        <div class="form-group">
+          <label>Tên tổ chức / cá nhân (string _name) <span class="required">*</span></label>
+          <input type="text" id="regName" placeholder="VD: FastMed Distribution"/>
+        </div>
+        <div class="form-group">
+          <label>Role (uint8) <span class="required">*</span></label>
+          <select id="regRole">
+            <option value="">-- Chọn role --</option>
+            <option value="1">1 — Manufacturer</option>
+            <option value="2">2 — Distributor</option>
+            <option value="3">3 — Pharmacy</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="registerActorOnChain()">
+            👤 Gọi registerActor()
+          </button>
+        </div>
+      </div>
+
+      <!-- Hướng dẫn luồng deploy -->
+      <div class="form-card" style="margin-top:20px">
+        <div class="section-title">Hướng dẫn Deploy &amp; Setup</div>
+        <ol class="guide-list">
+          <li>Deploy <code>SupplyChain.sol</code> trên Remix IDE → chọn network <strong>Ganache</strong> hoặc Testnet.</li>
+          <li>Copy <strong>Contract Address</strong> từ Remix → dán vào trang <strong>Contract Settings</strong>.</li>
+          <li>Kết nối MetaMask với tài khoản <strong>đã deploy</strong> (tài khoản đó là Admin/owner).</li>
+          <li>Vào trang này, đăng ký các ví khác với role tương ứng (Manufacturer=1, Distributor=2, Pharmacy=3).</li>
+          <li>Dùng các ví đã đăng ký để thực hiện <code>addMedicine</code> và <code>transferItem</code>.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ── PAGE: CONTRACT SETTINGS ── -->
+    <section class="page" id="pageSettings">
+      <div class="page-header">
+        <h2>Contract Settings</h2>
+        <p>Kết nối đến <code>SupplyChain.sol</code> đã deploy.</p>
+      </div>
+
+      <div class="form-card">
+        <div class="form-group">
+          <label>Contract Address</label>
+          <input type="text" id="contractAddress"
+                 placeholder="0x... (để trống = Mock mode)"/>
+        </div>
+        <div class="form-group">
+          <label>Custom ABI (JSON) — tùy chọn, để trống sẽ dùng ABI mặc định</label>
+          <textarea id="contractAbi" rows="6"
+                    placeholder="Dán ABI JSON ở đây nếu bạn có phiên bản contract khác..."></textarea>
+        </div>
+        <div class="contract-status" id="contractStatus">
+          <span class="status-dot mock"></span>
+          Đang chạy <strong>Mock / Demo Mode</strong> — không cần blockchain thật.
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="saveContractSettings()">Lưu &amp; Kết nối</button>
+        </div>
+      </div>
+
+      <div class="form-card abi-ref">
+        <div class="section-title">ABI mặc định (tự động tạo từ SupplyChain.sol)</div>
+        <pre id="abiDisplay"></pre>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- TX MODAL -->
+<div class="modal-overlay hidden" id="txModal">
+  <div class="modal">
+    <div class="modal-spinner" id="txSpinner">
+      <div class="spinner"></div>
+      <p id="txMessage">Đang xử lý...</p>
+    </div>
+    <div class="modal-success hidden" id="txSuccess">
+      <div class="success-icon">✓</div>
+      <h3>Transaction Confirmed!</h3>
+      <p id="txSuccessMsg"></p>
+      <div class="tx-hash" id="txHashDisplay"></div>
+      <button class="btn btn-primary" onclick="closeTxModal()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toastContainer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
